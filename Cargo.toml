@@ -1,9 +1,11 @@
 [package]
-name = "rust_hangman"
+name = "rust_guess_the_word"
 version = "0.1.0"
-authors = ["Viviana Montiel <vivimontiel@gmail.com>"]
+authors = ["Viviana Montiel <vivimontiel@gmail.com>", "Fabiana Montiel <fabimontiel@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+cursive = "*"
+rand = "0.3"
