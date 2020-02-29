@@ -62,7 +62,7 @@ fn start(siv : &mut Cursive){
 
     let selected_word : String = select_word(random_index);
     let selected_hint : String = select_hint(random_index);
-    let letters = word_to_list(selected_word);
+    let letters = word_to_list(&selected_word);
 
     // Main gameplay layer
     siv.add_layer(
@@ -207,7 +207,7 @@ fn select_hint(index: usize) -> String{
 /// 
 /// assert_eq!("_  _  _  _  _  _ ", answer);
 /// ```
-fn word_to_list(word: String) -> String {
+fn word_to_list(word: &str) -> String {
     let mut l: Vec<char> = Vec::new();
     let mut word_string = String::from(""); 
 
