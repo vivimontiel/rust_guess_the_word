@@ -5,10 +5,14 @@ use cursive::views::{Dialog, EditView, LinearLayout, TextView, Button};
 // imports used for handling files
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
 
-// imports used for creating random numbers
+/// imports used for creating random numbers
 extern crate rand;
 use rand::Rng;
+use std::str;
+
+
 
 fn main() {
     let mut siv = Cursive::default();
@@ -17,6 +21,12 @@ fn main() {
 	siv.run();
 }
 
+/// Displays the title page layer. Can either start a game or exit
+/// 
+///  # Arguments 
+/// 
+///  * `siv` - Main layer appearing in the Terminal
+/// 
 fn next_one(siv : &mut Cursive){
     siv.pop_layer();
     siv.add_layer(
@@ -26,25 +36,35 @@ fn next_one(siv : &mut Cursive){
             .button("Quit", Cursive::quit));
 }
 
-// removes the welcome layer and calls the game layer
+/// Removes the welcome layer and calls the game layer
+/// 
+///  # Arguments 
+/// 
+///  * `siv` - Main layer appearing in the Terminal
+/// 
 fn next_two(mut siv : &mut Cursive){
     siv.pop_layer();
     start(&mut siv);
 }
 
-//gameplay layer
+/// Gameplay layer
+/// 
+///  # Arguments 
+/// 
+///  * `siv` - Main layer appearing in the Terminal
+/// 
 fn start(siv : &mut Cursive){
 
     siv.pop_layer();
     
-    //random number
+    // Random number
     let random_index : usize = rand::thread_rng().gen_range(0, 24);
 
     let selected_word : String = select_word(random_index);
     let selected_hint : String = select_hint(random_index);
-    let letters = word_to_list(&selected_word);
+    let letters = word_to_list(selected_word);
 
-    //main gameplay layer
+    // Main gameplay layer
     siv.add_layer(
         Dialog::around(
             LinearLayout::vertical()
@@ -63,13 +83,11 @@ fn start(siv : &mut Cursive){
 
                 //when the button 'Guess' is pressed, it checks whether the word the player entered is a match or not
                 .child(Button::new("Guess", move |siv| { 
-                    let edit_3 = siv.find_name::<EditView>("3").unwrap();
-                    let input = edit_3.get_content();
-                    let answer = selected_word.to_string();
-                    let rcc = String::clone(&input);
+                    let input = &*siv.find_name::<EditView>("3").unwrap().get_content();
+                    let answer = &selected_word;
 
                     //comparison of the player's input with the hidden word
-                    let matches = rcc == answer; 
+                    let matches = answer == input; 
 
                     //displays if the word is a match or not
                     siv.call_on_name("match", |v: &mut TextView| {
@@ -91,42 +109,105 @@ fn start(siv : &mut Cursive){
     );
 
 	siv.run();
-
 }
 
 fn on_edit(s: &mut Cursive, _content: &str, _cursor: usize) {
     let _text_3 = s.find_name::<EditView>("3").unwrap();
 }
 
-
-// reads and processes the file containing the words to guess
-// selects a word in the index given and returns it as a String
+/// Reads and processes the file containing the words to guess
+/// Selects a word in the index given and returns it as a String
+/// 
+/// # Arguments 
+/// 
+///  * `index` - the position of the word that is to be chosen
+///  
+/// # Example
+/// ```
+/// let arg = 2;
+/// let answer = select_word(arg);
+/// 
+/// assert_eq!("camera", answer);
+/// ```
+/// 
+/// # Remarks
+/// 
+///  This function is heavily inspired from this project
+///  https://github.com/dcode-youtube/hangman-rust
+/// 
 fn select_word(index: usize) -> String {
-    let mut file = File::open("words.txt").expect("Error opening file!");
-    let mut content = String::new();
+    let path = Path::new("words.txt");
+    let mut file = match File::open(&path) {
+        Err(_why) => panic!("An error occured while reading the file!"),
+        Ok(file) => file,
+    };
     
-    file.read_to_string(&mut content).expect("An error occured while reading the file!");
-
-    let words: Vec<&str> = content.split('\n').collect();
-
-    return String::from(words[index]);
-}
-
-// reads and processes the file containing the words to guess
-// selects the hint in the index given and returns it as a String
-fn select_hint(index: usize) -> String {
-    let mut file = File::open("hints.txt").expect("Error opening file!");
     let mut content = String::new();
 
-    file.read_to_string(&mut content).expect("An error occured while reading the file!");
+    match file.read_to_string(&mut content) {
+        Err(_why) => panic!("An error occured while reading the file!"),
+        Ok(content) => content,
+    };
 
     let words: Vec<&str> = content.split('\n').collect();
 
     return String::from(words[index]);
 }
 
-// function taking a word (String) on entry and creation a list (Vector) composed of each letter 
-fn word_to_list(word: &String) -> String {
+
+/// Reads and processes the file containing the words to guess
+/// Selects the hint in the index given and returns it as a String
+/// 
+///  # Arguments 
+/// 
+///  * `index` - the position of the word that is to be chosen
+/// 
+/// # Example
+/// ```
+/// let arg = 2;
+/// let answer = select_hint(arg);
+/// 
+/// assert_eq!("a device that is used for taking photographs or for making movies, television programs, etc.", answer);
+/// ```
+/// 
+/// # Remarks
+/// 
+///  This function is heavily inspired from this project
+///  https://github.com/dcode-youtube/hangman-rust
+/// 
+fn select_hint(index: usize) -> String{
+    let path = Path::new("hints.txt");
+    let mut file = match File::open(&path) {
+        Err(_why) => panic!("An error occured while reading the file!"),
+        Ok(file) => file,
+    };
+    
+    let mut content = String::new();
+
+    match file.read_to_string(&mut content) {
+        Err(_why) => panic!("An error occured while reading the file!"),
+        Ok(content) => content,
+    };
+
+    let words: Vec<&str> = content.split('\n').collect();
+
+    return String::from(words[index]);
+}
+
+/// Function taking a word on entry and creation a list (Vector) composed of each letter 
+/// 
+///  # Arguments 
+/// 
+///  * `word` - the word that will be transformed into a hidden one
+/// 
+/// # Example
+/// ```
+/// let arg = "camera";
+/// let answer = word_to_list(arg);
+/// 
+/// assert_eq!("_  _  _  _  _  _ ", answer);
+/// ```
+fn word_to_list(word: String) -> String {
     let mut l: Vec<char> = Vec::new();
     let mut word_string = String::from(""); 
 
@@ -141,8 +222,6 @@ fn word_to_list(word: &String) -> String {
         word_string.push('_');
         word_string.push(' ');
     }
-
-    // Example: _ _ _ _
     return word_string;
 }
 
